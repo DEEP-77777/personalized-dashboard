@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Deep's Fitness Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #000000;
+      --card-bg: #f2f2f2;
+      --sidebar-bg: #eeeeee;
+    }
+    body.dark-mode {
+      --bg: #1e1e1e;
+      --text: #f5f5f5;
+      --card-bg: #2c2c2c;
+      --sidebar-bg: #2a2a2a;
+    }
+    @keyframes bgShift {
+      0% { background-color: #ffffff; }
+      25% { background-color: #f0f8ff; }
+      50% { background-color: #e6ffe6; }
+      75% { background-color: #fff0f5; }
+      100% { background-color: #ffffff; }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      transition: background-color 0.3s, color 0.3s;
+      animation: bgShift 30s infinite;
+    }
+    .dashboard {
+      display: flex;
+      flex-wrap: wrap;
+      min-height: 100vh;
+    }
+    .sidebar {
+      width: 220px;
+      background-color: var(--sidebar-bg);
+      padding: 20px;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    }
+    .sidebar h2 {
+      margin-top: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sidebar a {
+      display: block;
+      margin: 10px 0;
+      color: var(--text);
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .main-content {
+      flex: 1;
+      padding: 20px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    #search {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      width: 100%;
+      max-width: 300px;
+    }
+    #toggle-dark {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      background-color: var(--card-bg);
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .card-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background-color: var(--card-bg);
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    .card h3 {
+      margin: 10px 0 5px;
+    }
+    .card p {
+      font-size: 14px;
+    }
+    .card button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 5px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    @media (max-width: 768px) {
+      .dashboard {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <aside class="sidebar">
+      <h2><i class="fas fa-dumbbell"></i> Deep's Fitness Dashboard</h2>
+      <a href="#feed"><i class="fas fa-newspaper"></i> Feed</a>
+      <a href="#trending"><i class="fas fa-fire"></i> Trending</a>
+      <a href="#favorites"><i class="fas fa-star"></i> Favorites</a>
+    </aside>
+    <main class="main-content">
+      <div class="header">
+        <input type="text" id="search" placeholder="Search..." />
+        <button id="toggle-dark"><i class="fas fa-moon"></i> Toggle Dark Mode</button>
+      </div>
+
+      <section id="feed"><h2>Fitness Feed</h2><div id="feed-container" class="card-container"></div></section>
+      <section id="trending"><h2>Trending Now</h2><div id="trending-container" class="card-container"></div></section>
+      <section id="favorites"><h2>Your Favorites</h2><div id="favorites-container" class="card-container"></div></section>
+
+      <section id="tools">
+        <h2>Fitness Tools</h2>
+        <div class="card-container">
+          <div class="card">
+            <h3>🚶 Simulated Step Counter</h3>
+            <p id="steps">Steps: 0</p>
+            <button onclick="simulateSteps()">Simulate Steps</button>
+          </div>
+          <div class="card">
+            <h3>🔥 Calorie Tracker</h3>
+            <input type="number" id="caloriesInput" placeholder="Enter calories" style="width:100%;padding:8px;border-radius:5px;margin-bottom:10px;">
+            <button onclick="addCalories()">Add Calories</button>
+            <p id="calorieCount">Total: 0 kcal</p>
+          </div>
+          <div class="card">
+            <h3>📏 BMI Calculator</h3>
+            <input type="number" id="bmiWeight" placeholder="Weight (kg)" style="width:100%;padding:8px;border-radius:5px;margin-bottom:10px;">
+            <input type="number" id="bmiHeight" placeholder="Height (cm)" style="width:100%;padding:8px;border-radius:5px;margin-bottom:10px;">
+            <button onclick="calculateBMI()">Calculate BMI</button>
+            <p id="bmiResult">BMI: --</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const feedContainer = document.getElementById("feed-container");
+    const trendingContainer = document.getElementById("trending-container");
+    const favoritesContainer = document.getElementById("favorites-container");
+    const toggleBtn = document.getElementById("toggle-dark");
+    const searchInput = document.getElementById("search");
+    let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+
+    let feedData = [
+      { id: 'Feed-1', title: '🏃 HIIT Workout Guide', description: 'Burn fat quickly with high-intensity training.', image: 'https://images.pexels.com/photos/414029/pexels-photo-414029.jpeg' },
+      { id: 'Feed-2', title: '🍎 Clean Eating 101', description: 'Refresh your body with nutrient-rich foods.', image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg' },
+      { id: 'Feed-3', title: '🧘 Stretching Tips', description: 'Enhance flexibility and reduce injury risk.', image: 'https://images.pexels.com/photos/3823039/pexels-photo-3823039.jpeg' },
+      { id: 'Feed-4', title: '💪 Strength Training', description: 'Build muscle effectively with proven techniques.', image: 'https://images.pexels.com/photos/2261477/pexels-photo-2261477.jpeg' },
+      { id: 'Feed-5', title: '🚴 Home Cardio Routines', description: 'No-equipment cardio to get your heart pumping.', image: 'https://images.pexels.com/photos/414029/pexels-photo-414029.jpeg' }
+    ];
+
+    const trendingData = [
+      { id: 'Trend-1', title: '🔥 Fat Burn Apps', description: 'Top mobile apps that guide your fat-loss journey.', image: 'https://images.pexels.com/photos/841130/pexels-photo-841130.jpeg' },
+      { id: 'Trend-2', title: '💧 Smart Hydration', description: 'Water bottles that remind you to drink.', image: 'https://images.pexels.com/photos/1133534/pexels-photo-1133534.jpeg' },
+      { id: 'Trend-3', title: '🥗 Vegan Muscle Fuel', description: 'Plant-based diets for athletic strength.', image: 'https://images.pexels.com/photos/1640772/pexels-photo-1640772.jpeg' },
+      { id: 'Trend-4', title: '🛌 Sleep Trackers', description: 'Smart sleep tech to maximize recovery.', image: 'https://images.pexels.com/photos/935777/pexels-photo-935777.jpeg' },
+      { id: 'Trend-5', title: '📱 Smart Home Gyms', description: 'Fitness tech that transforms your home.', image: 'https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg' }
+    ];
+
+    function createCard(item) {
+      const card = document.createElement("div");
+      card.className = "card";
+      const isFavorite = favorites.some(f => f.id === item.id);
+      const favText = isFavorite ? "✓ Added to Favorites" : '<i class="fas fa-star"></i> Add to Favorites';
+      const favClass = isFavorite ? 'style="background-color: #28a745;"' : "";
+      card.innerHTML = `
+        <img src="${item.image}" alt="${item.title}" style="width:100%; border-radius: 8px;" />
+        <h3>${item.title}</h3>
+        <p>${item.description}</p>
+        <button ${favClass} onclick='handleFavorite("${item.id}")'>${favText}</button>`;
+      return card;
+    }
+
+    function renderFeed(filtered = null) {
+      feedContainer.innerHTML = "";
+      (filtered || feedData).forEach(item => feedContainer.appendChild(createCard(item)));
+    }
+
+    function renderTrending() {
+      trendingContainer.innerHTML = "";
+      trendingData.forEach(item => trendingContainer.appendChild(createCard(item)));
+    }
+
+    function renderFavorites() {
+      favoritesContainer.innerHTML = "";
+      favorites.forEach(item => favoritesContainer.appendChild(createCard(item)));
+    }
+
+    function handleFavorite(id) {
+      const item = [...feedData, ...trendingData].find(el => el.id === id);
+      if (!favorites.find(f => f.id === item.id)) {
+        favorites.push(item);
+        localStorage.setItem("favorites", JSON.stringify(favorites));
+        renderFeed();
+        renderTrending();
+        renderFavorites();
+      }
+    }
+
+    searchInput.addEventListener("input", () => {
+      const keyword = searchInput.value.toLowerCase();
+      const filtered = feedData.filter(item =>
+        item.title.toLowerCase().includes(keyword) ||
+        item.description.toLowerCase().includes(keyword)
+      );
+      renderFeed(filtered);
+    });
+
+    toggleBtn.onclick = () => document.body.classList.toggle("dark-mode");
+
+    window.onload = () => {
+      renderFeed();
+      renderTrending();
+      renderFavorites();
+    };
+
+    let steps = 0;
+    function simulateSteps() {
+      steps += Math.floor(Math.random() * 100 + 50);
+      document.getElementById("steps").textContent = `Steps: ${steps}`;
+    }
+
+    let totalCalories = 0;
+    function addCalories() {
+      const input = document.getElementById("caloriesInput");
+      const val = parseInt(input.value);
+      if (!isNaN(val)) {
+        totalCalories += val;
+        document.getElementById("calorieCount").textContent = `Total: ${totalCalories} kcal`;
+      }
+      input.value = "";
+    }
+
+    function calculateBMI() {
+      const weight = parseFloat(document.getElementById("bmiWeight").value);
+      const height = parseFloat(document.getElementById("bmiHeight").value);
+      if (!isNaN(weight) && !isNaN(height) && height > 0) {
+        const bmi = weight / ((height / 100) ** 2);
+        document.getElementById("bmiResult").textContent = `BMI: ${bmi.toFixed(2)}`;
+      } else {
+        document.getElementById("bmiResult").textContent = "BMI: --";
+      }
+    }
+  </script>
+</body>
+</html>
